@@ -22,7 +22,7 @@ fn vector_of_vectors(size: Int = 256) -> Float64:
                 vec_outer[i][j] = val
 
     var report = run[wrapper](min_runtime_secs=0.2, max_runtime_secs=1.0)
-    print("Std lib vector of vectors: ", report.mean(), "seconds")
+    print("Std lib vector of vectors:", report.mean("ms"), "milliseconds")
     _ = (vec_outer,)
     return report.mean()
 
@@ -45,7 +45,7 @@ fn vector_of_vectors_2(size: Int = 256) -> Float64:
                 vec_outer[i][j] = val
 
     var report = run[wrapper](min_runtime_secs=0.2, max_runtime_secs=1.0)
-    print("Reference based vector of vectors: ", report.mean(), "seconds")
+    print("Reference based vector of vectors:", report.mean("ms"), "milliseconds")
     _ = (vec_outer,)
     return report.mean()
 

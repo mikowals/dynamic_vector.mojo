@@ -51,9 +51,9 @@ Keep in mind this is a 2x2 vector of vectors but the same problem occurs for any
 `mojo vector_benchmark.mojo` will time updating each value one by one in 256 x 256 `DynamicVector[DynamicVector[Int]]`.
 
 ```console
-Std lib vector of vectors:  0.0070529722222222218 seconds
-Reference based vector of vectors:  2.2355799664866878e-05 seconds
-__setitem__ with References is  315.48736023548634 times faster than the std lib version.
+Std lib vector of vectors: 7.2681428571428572 milliseconds
+Reference based vector of vectors: 0.022431906976744187 milliseconds
+__setitem__ with References is  324.00913862017853 times faster than the std lib version.
 ```
 
 This is the time savings by switching to efficient Reference usage - avoiding the extra activity in the previous demo - for a relatively small number of nested fields. While the nesting multiplies the time savings in this example, there will be some savings in any update of a `struct` using `__setitem__` in `DynamicVector`.
