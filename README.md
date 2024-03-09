@@ -1,4 +1,4 @@
-# Mojo Reference Demo
+# Mojo Reference Demo - Mojo v24.1.0
 
 An experimental drop in replacement for DynamicVector. It probably has some bugs and it is likely that the nice things it does with References will be implemented in the Standard Library in a more reliable way shortly. But it shows why References are useful and demonstrates new features like `__refitem__` and `__lifetime_of(self)`.
 
@@ -9,11 +9,12 @@ The repo contains:
 - vector_benchmark.mojo - shows [time savings](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#time-savings-when-updating-struct-elements) when updating a 256 x 256 vector of vectors.
 - slice.mojo - [exercies DynamicVectorSlice](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#python-style-slices---var-evens--vec02) and `vec[::]` notation.
 
+
 # `__setitem__` works much better with References
 
-The current Standard Library implementation has a workaround where `__getitem__` and `__setitem__` are tightly linked. And since `__getitem__` produces a copy this leads to a large amount of extra copies, moves, and deletes. You can see all this extra activity very clearly in a simple 2x2 `DynamicVector[DynamicVector[Verbose]]` where `Verbose` is a custom `struct` that logs all these events.
+The current Standard Library implementation of `__setitem__` often uses `__getitem__` to simulate in-place updates. And since `__getitem__` produces a copy this leads to a large amount of extra copies, moves, and deletes. You can see all this extra activity very clearly in a simple 2x2 `DynamicVector[DynamicVector[Verbose]]` where `Verbose` is a custom `struct` that logs all these events.
 
-Running `mojo verbose.mojo` outputs all lifecycle events from 2x2 nested stdlib vectors when a single field is updated and then does it again with 2x2 nested vectors using References internally. The Reference version has no unnecessary lifecycle events.
+Running `mojo verbose.mojo` outputs all lifecycle events from 2x2 nested stdlib vectors when a single field is updated.  Then it repeats the experiement with vectors using References internally. The Reference version has no unnecessary lifecycle events.
 
 Calling `vec[1][1] = 1000` made of stdlib `DynamicVector`s produces: 5 copies, 5 deletes, and 10 moves:
 
@@ -42,14 +43,15 @@ del with value: 1 hidden_id 101
 finished update in std lib vector of vectors
 ```
 
-Calling `vec[1][1] = 2000` with Reference based DynamicVector (uses `__refitem__(index)[] = 2000`) does no intermediate copies, deletes, or moves,
+Calling `vec[1][1] = 2000` with Reference based DynamicVector does no intermediate copies, deletes, or moves,
 
 ```console
 update one value in reference based vector of vectors
 finished update in reference based vector of vectors
 ```
 
-Keep in mind this is a 2x2 vector of vectors but the same problem occurs for any `struct` that owns another `struct` and allows updates with `__setitem__` (usually called with `some_struct[index] = `).  There is a lot of extra activity if you are not truely updating in place using References.  
+Keep in mind this is a 2x2 vector of vectors but the same problem occurs for any `struct` that owns another `struct` and allows updates with `__setitem__` (usually called with `some_struct[index] = `).  There is a lot of extra activity if updates aren't truely done in-place using References.
+
 
 # Time savings when updating struct elements
 
@@ -61,13 +63,14 @@ Reference based vector of vectors:  2.2355799664866878e-05 seconds
 __setitem__ with References is  315.48736023548634 times faster than the std lib version.
 ```
 
-This is the time savings by switching to efficient Reference usage - avoiding the extra activity in the previous demo - for a relatively small number of nested fields. While the nesting multiplies the time savings in this example, there will be some savings in any update of a `struct` using `__setitem__` in `DynamicVector`. The larger the `struct` the larger the savings, independent of how small field being updated is. In this example, we are only updating a reference passable ("trivial") Int and it still triggers copies and deletes of sibling vectors. These are avoided if instead you update a Reference.
+This is the time savings by switching to efficient Reference usage - avoiding the extra activity in the previous demo - for a relatively small number of nested fields. While the nesting multiplies the time savings in this example, there will be some savings in any update of a `struct` using `__setitem__` in `DynamicVector`. 
 
+The larger the `struct` the larger the savings, independent of how small field being updated is. In this example, we are only updating a reference passable ("trivial") Int and it still triggers copies and deletes of sibling values. These are avoided if instead you update in-place via a Reference.
 
 
 # Python-style slices - `var evens = vec[0::2]`
 
-`mojo slice_demo.mojo` creates some slices and demonstrates inplace updates since each slice holds a Reference to the original vector.
+`mojo slice_demo.mojo` creates some slices and demonstrates in-place updates since each slice holds a Reference to the original vector.
 
 ```console
 original vec (size = 16) [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
@@ -80,4 +83,4 @@ slice_1 = vec[0::2] (size = 8) [0, 2, 4, 6, 1000, 10, 12, 14]
 original vec (size = 16) [0, 1, 2, 3, 4, 5, 6, 7, 1000, 9, 10, 11, 12, 13, 14, 15]
 ```
 
-The real world use case for something like this is in [Fast Fourier Transform Demo](https://github.com/duckki/field-fft-mojo/blob/main/python/fft-python.py#L15) where the Python-style slices are readable and efficient.
+The real world use case something like [Fast Fourier Transform Demo](https://github.com/duckki/field-fft-mojo/blob/main/python/fft-python.py#L15) where the Python-style slices are readable and efficient.
