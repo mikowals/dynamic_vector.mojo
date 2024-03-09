@@ -2,7 +2,7 @@
 
 [![Run Tests](https://github.com/mikowals/dynamic_vector.mojo/actions/workflows/test.yml/badge.svg)](https://github.com/mikowals/dynamic_vector.mojo/actions/workflows/test.yml)
 
-[Mojo🔥](https://github.com/modularml/mojo)  test runner using [pytest](https://docs.pytest.org).
+[Mojo🔥](https://github.com/modularml/mojo) test runner using [pytest](https://docs.pytest.org).
 
 An experimental drop in replacement for DynamicVector. It almost certainly has some bugs and it is likely that the nice things it does with References will be implemented in the Standard Library in a more reliable way shortly. But it shows why References are useful and demonstrates new features like `__refitem__` and `__lifetime_of(self)`.
 
@@ -20,18 +20,26 @@ The current Standard Library implementation of `__setitem__` often uses `__getit
 
 Running `mojo verbose.mojo` outputs all lifecycle events from 2x2 nested stdlib vectors when a single field is updated. Then it repeats the experiement with vectors using References internally. The Reference version has no unnecessary lifecycle events.
 
-Calling `vec[1][1] = Verbose(1000)` made of stdlib `DynamicVector`s produces: 2 copies, 3 deletes, and 6 moves:
+Calling `vec[1][1].value = 1000` made of stdlib `DynamicVector`s produces: 5 copies, 5 deletes, and 10 moves:
 
 ```console
 update one value in std lib vector of vectors
-init 1000
+copyinit with value: 0 hidden_id: 100
+moveinit with value: 0 hidden_id 100
+copyinit with value: 1 hidden_id: 101
+moveinit with value: 1 hidden_id 101
+copyinit with value: 1 hidden_id: 101
+moveinit with value: 0 hidden_id 100
+del with value: 0 hidden_id 100
+moveinit with value: 1 hidden_id 101
+del with value: 1 hidden_id 101
 copyinit with value: 0 hidden_id: 100
 moveinit with value: 0 hidden_id 100
 copyinit with value: 1 hidden_id: 101
 moveinit with value: 1 hidden_id 101
 moveinit with value: 1 hidden_id 101
 del with value: 1 hidden_id 101
-moveinit with value: 1000 hidden_id 1100
+moveinit with value: 1000 hidden_id 101
 moveinit with value: 0 hidden_id 100
 del with value: 0 hidden_id 100
 moveinit with value: 1 hidden_id 101
@@ -39,12 +47,10 @@ del with value: 1 hidden_id 101
 finished update in std lib vector of vectors
 ```
 
-Calling `vec[1][1] = Verbose(2000)` with Reference based DynamicVector does no intermediate copies and deletes the replaced item.
+Calling `vec[1][1].value = 2000` with Reference based DynamicVector does no intermediate copies, deletes, or moves.
 
 ```console
 update one value in reference based vector of vectors
-del with value: 3 hidden_id 103
-init 2000
 finished update in reference based vector of vectors
 ```
 
