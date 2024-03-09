@@ -77,7 +77,9 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
 
     @always_inline
     fn __getitem__(self, index: Int) -> T:
-        return __get_address_as_lvalue((self.data + index).value)
+        # Made this immutable but I don't think it has any impact, deref before return makes it immuatable
+        # but compiler doens't like self.__refitem__ use without an inout self, so wrap in Reference
+        return Reference[T, __mlir_attr.`0: i1`](self.data.__refitem__(index))[]
 
     @always_inline
     fn __getitem__(

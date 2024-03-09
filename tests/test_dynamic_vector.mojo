@@ -83,6 +83,18 @@ fn test_capacity_increase() raises:
     test.assert_equal(v[3], 4, "value 4")
 
 
+fn test_getitem() raises:
+    var test = MojoTest("getitem")
+    var v = DynamicVector[Int](capacity=2)
+    v.push_back(1)
+    v.push_back(2)
+    test.assert_equal(v[0], 1, "value 1")
+    test.assert_equal(v[1], 2, "value 2")
+    var a = v[0]
+    a = 2
+    test.assert_equal(v[0], 1, "still value 1")
+
+
 fn test_setitem() raises:
     var test = MojoTest("setitem")
     var v = DynamicVector[Int](capacity=2)
@@ -164,6 +176,7 @@ fn main() raises:
     test_resize()
     test_pop_back()
     test_capacity_increase()
+    test_getitem()
     test_setitem()
     test_copyinit()
     test_moveinit()
