@@ -57,7 +57,7 @@ fn main():
     print()
 
     print("update one value in std lib vector of vectors")
-    outer_1[1][1].set_value(1000)
+    outer_1[1][1] = Verbose(1000)
     print("finished update in std lib vector of vectors")
     print()
     print("fetch from std lib vector of vectors")
@@ -68,7 +68,7 @@ fn main():
     print()
 
     print("update one value in reference based vector of vectors")
-    outer_2[1][1].set_value(2000)
+    outer_2[1][1] = Verbose(2000)
     print("finished update in reference based vector of vectors")
     print()
     print("fetch from reference based vector of vectors")
