@@ -2,7 +2,14 @@
 
 An experimental drop in replacement for DynamicVector. It probably has some bugs and it is likely that the nice things it does with References will be implemented in the Standard Library in a more reliable way shortly. But it shows why References are useful and demonstrates new features like `__refitem__` and `__lifetime_of(self)`.
 
-### `__setitem__` works much better with References
+The repo contains:
+- The DynamicVector [implementation](https://github.com/mikowals/dynamic_vector.mojo/blob/main/dynamic_vector.mojo#L4).
+- An attempt at [DynamicVectorSlice](https://github.com/mikowals/dynamic_vector.mojo/blob/main/dynamic_vector.mojo#L98).
+- verbose.mojo [demonstrates](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#__setitem__-works-much-better-with-references) avoiding extra copies and deletes.
+- vector_benchmark.mojo shows [time savings](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#time-savings-when-updating-dynamicvectordynamicvectorint) when updating a 256 x 256 vector of vectors.
+- slice.mojo [exercies DynamicVectorSlice](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#python-style-slices---var-evens--vec02) and `vec[::]` notation
+
+# `__setitem__` works much better with References
 
 The current Standard Library implementation has a workaround where `__getitem__` and `__setitem__` are tightly linked. And since `__getitem__` produces a copy this leads to a large amount of extra copies, moves, and deletes. You can see all this extra activity very clearly in a simple 2x2 `DynamicVector[DynamicVector[Verbose]]` where `Verbose` is a custom `struct` that logs all these events.
 
@@ -42,7 +49,7 @@ update one value in reference based vector of vectors
 finished update in reference based vector of vectors
 ```
 
-### Time savings when updating a DynamicVector[DynamicVector[Int]]
+# Time savings when updating nested vectors
 
 `mojo vector_benchmark.mojo` will time updating each value one by one in 256 x 256 `DynamicVector[DynamicVector[Int]]`.
 
@@ -54,7 +61,9 @@ __setitem__ with References is  315.48736023548634 times faster than the std lib
 
 This is the time savings by switching to efficient Reference usage - avoiding the extra activity in the previous demo - for a relatively small number of nested fields. While the nesting multiplies the time savings in this example, there will be some savings in any update of a `struct` using `__setitem__` in `DynamicVector`. The larger the `struct` the larger the savings, independent of how small field being updated is. In this example, we are only updating a reference passable ("trivial") Int and it still triggers copies and deletes of sibling vectors. These are avoided if instead you update a Reference.
 
-### References allow for Python-style slices - `var evens = vec[0::2]`
+
+
+# Python-style slices - `var evens = vec[0::2]`
 
 `mojo slice_demo.mojo` creates some slices and demonstrates inplace updates since each slice holds a Reference to the original vector.
 
