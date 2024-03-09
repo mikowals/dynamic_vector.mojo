@@ -1,6 +1,6 @@
 # Mojo Reference Demo - Mojo v24.1.0
 
-An experimental drop in replacement for DynamicVector. It probably has some bugs and it is likely that the nice things it does with References will be implemented in the Standard Library in a more reliable way shortly. But it shows why References are useful and demonstrates new features like `__refitem__` and `__lifetime_of(self)`.
+An experimental drop in replacement for DynamicVector. It almost certainly has some bugs and it is likely that the nice things it does with References will be implemented in the Standard Library in a more reliable way shortly. But it shows why References are useful and demonstrates new features like `__refitem__` and `__lifetime_of(self)`.
 
 The repo contains:
 - The DynamicVector [implementation](https://github.com/mikowals/dynamic_vector.mojo/blob/main/dynamic_vector.mojo#L4).
