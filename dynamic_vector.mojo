@@ -50,6 +50,7 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
         self.size -= 1
         return (self.data + self.size).take_value()
 
+    # TODO: Redo with mutability param, see discord discussion
     @always_inline
     fn __refitem__(
         inout self, index: Int
@@ -100,6 +101,7 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
         self.size += len(other)
         other.size = 0
 
+    # TODO: Redo with __refitem__ as described in discord
     @always_inline
     fn __getitem__(self, index: Int) -> T:
         # Made this immutable but I don't think it has any impact, deref before return makes it immuatable
@@ -114,7 +116,7 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
 
     @always_inline
     fn __setitem__(inout self, index: Int, owned value: T):
-        self.__refitem__(index)[] = value
+        self.data[index] = value ^
 
     @always_inline
     fn __len__(self) -> Int:
