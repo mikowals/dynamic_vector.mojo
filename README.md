@@ -13,7 +13,7 @@ The repo contains:
 
 The current Standard Library implementation has a workaround where `__getitem__` and `__setitem__` are tightly linked. And since `__getitem__` produces a copy this leads to a large amount of extra copies, moves, and deletes. You can see all this extra activity very clearly in a simple 2x2 `DynamicVector[DynamicVector[Verbose]]` where `Verbose` is a custom `struct` that logs all these events.
 
-Running `mojo verbose.mojo` outputs all lifecycle activities from 2x2 nested stdlib vectors vs a 2x2 using References internally. It updates one value and displays the updated value.
+Running `mojo verbose.mojo` outputs all lifecycle events from 2x2 nested stdlib vectors when a single field is updated and then does it again with 2x2 nested vectors using References internally. The Reference version has no unnecessary lifecycle events.
 
 Calling `vec[1][1] = 1000` made of stdlib `DynamicVector`s produces: 5 copies, 5 deletes, and 10 moves:
 
@@ -48,6 +48,8 @@ Calling `vec[1][1] = 2000` with Reference based DynamicVector (uses `__refitem__
 update one value in reference based vector of vectors
 finished update in reference based vector of vectors
 ```
+
+Keep in mind this is a 2x2 vector of vectors but the same problem occurs for any `struct` that owns another `struct` and allows updates with `__setitem__` (usually called with `some_struct[index] = `).  There is a lot of extra activity if you are not truely updating in place using References.  
 
 # Time savings when updating struct elements
 
