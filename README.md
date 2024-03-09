@@ -7,7 +7,7 @@ The repo contains:
 - An attempt at [DynamicVectorSlice](https://github.com/mikowals/dynamic_vector.mojo/blob/main/dynamic_vector.mojo#L98).
 - verbose.mojo - [demonstrates](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#__setitem__-works-much-better-with-references) avoiding extra copies and deletes.
 - vector_benchmark.mojo - shows [time savings](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#time-savings-when-updating-struct-elements) when updating a 256 x 256 vector of vectors.
-- slice.mojo - [exercies DynamicVectorSlice](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#python-style-slices---var-evens--vec02) and `vec[::]` notation.
+- slice.mojo - [exercises DynamicVectorSlice](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#python-style-slices---var-evens--vec02) and `vec[::]` notation.
 
 
 # `__setitem__` works much better with References
