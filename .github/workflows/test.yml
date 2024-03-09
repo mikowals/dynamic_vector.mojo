@@ -11,7 +11,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Install dependencies
         run: |
-          curl https://get.modular.com | MODULAR_AUTH=${{ secrets.MODULAR_AUTH }} sh -
+          curl https://get.modular.com | sh -
           modular auth 
           # modular install --install-version 24.1.0 mojo
           # TODO: fix version pinning of mojo https://github.com/modularml/mojo/issues/1887
