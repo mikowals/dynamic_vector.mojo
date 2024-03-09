@@ -68,12 +68,37 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
         self.capacity = new_capacity
 
     @always_inline
-    fn resize(inout self, new_size: Int, value: T):
+    fn resize(inout self, new_size: Int, value: T) raises:
         if new_size > self.size:
             if new_size > self.capacity:
                 self.reserve(new_size)
             for _ in range(self.size, new_size):
                 self.append(value)
+        elif new_size < self.size:
+            self.resize(new_size)
+
+    @always_inline
+    fn resize(inout self, new_size: Int) raises:
+        if new_size > self.size:
+            raise Error("resize requires a fill value when increasing the size")
+        elif new_size < self.size:
+            for i in range(new_size, self.size):
+                _ = (self.data + i).take_value()
+            self.size = new_size
+
+    @always_inline
+    fn clear(inout self):
+        for i in range(self.size):
+            _ = (self.data + i).take_value()
+        self.size = 0
+
+    @always_inline
+    fn extend(inout self, owned other: Self):
+        self.reserve(self.size + len(other))
+        for i in range(len(other)):
+            (other.data + i).move_into(self.data + self.size + i)
+        self.size += len(other)
+        other.size = 0
 
     @always_inline
     fn __getitem__(self, index: Int) -> T:

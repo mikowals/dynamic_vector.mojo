@@ -42,14 +42,23 @@ fn test_append() raises:
 
 fn test_resize() raises:
     var test = MojoTest("resize")
-    var v = DynamicVector[Int](capacity=2)
-    v.resize(4, 7)
-    test.assert_equal(len(v), 4, "size 4")
+    var v = DynamicVector[Int](capacity=1)
+    v.resize(2, 7)
+    test.assert_equal(len(v), 2, "size = 2")
     test.assert_equal(v[0], 7, "value 7")
     test.assert_equal(v[1], 7, "value 7")
-    test.assert_equal(v[2], 7, "value 7")
-    test.assert_equal(v[3], 7, "value 7")
-    test.assert_equal(v.capacity, 4, "capacity 4")
+    test.assert_equal(v.capacity, 2, "capacity = 2")
+
+
+fn test_resize_smaller() raises:
+    var test = MojoTest("smaller resize")
+    var v = DynamicVector[Int](capacity=2)
+    v.push_back(1)
+    v.push_back(2)
+    v.resize(1)
+    test.assert_equal(len(v), 1, "size now 1")
+    test.assert_equal(v[0], 1, "value 1")
+    test.assert_equal(v.capacity, 2, "capacity still 2")
 
 
 fn test_pop_back() raises:
@@ -169,11 +178,37 @@ fn test_slice() raises:
     test.assert_equal(v[1], 4, "original element contains 4")
 
 
+fn test_clear() raises:
+    var test = MojoTest("clear")
+    var v = DynamicVector[Int](capacity=2)
+    v.push_back(1)
+    v.push_back(2)
+    v.clear()
+    test.assert_equal(len(v), 0, "size 0")
+    test.assert_equal(v.capacity, 2, "capacity 2")
+
+
+fn test_extend() raises:
+    var test = MojoTest("extend")
+    var v = DynamicVector[Int](capacity=2)
+    v.push_back(1)
+    v.push_back(2)
+    var v2 = DynamicVector[Int](capacity=2)
+    v2.push_back(3)
+    v2.push_back(4)
+    v.extend(v2)
+    test.assert_equal(len(v), 4, "size 4")
+    test.assert_equal(v[2], 3, "value 3")
+    test.assert_equal(v[3], 4, "value 4")
+    test.assert_equal(v.capacity, 4, "capacity 4")
+
+
 fn main() raises:
     test_create_dynamic_vector()
     test_push_back()
     test_append()
     test_resize()
+    test_resize_smaller()
     test_pop_back()
     test_capacity_increase()
     test_getitem()
@@ -183,3 +218,5 @@ fn main() raises:
     test_delete()
     test_refitem()
     test_slice()
+    test_clear()
+    test_extend()
