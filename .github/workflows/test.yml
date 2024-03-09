@@ -16,9 +16,10 @@ jobs:
           # modular install --install-version 24.1.0 mojo
           # TODO: fix version pinning of mojo https://github.com/modularml/mojo/issues/1887
           modular install mojo
-          pip install .
+          pip install pytest
+          pip install git+https://github.com/guidorice/mojo-pytest.git
       - name: Unit Tests
         run: |
           export MODULAR_HOME="/home/runner/.modular"
           export PATH="/home/runner/.modular/pkg/packages.modular.com_mojo/bin:$PATH"
-          make test
+          pytest
