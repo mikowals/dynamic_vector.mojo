@@ -83,4 +83,4 @@ slice_1 = vec[0::2] (size = 8) [0, 2, 4, 6, 1000, 10, 12, 14]
 original vec (size = 16) [0, 1, 2, 3, 4, 5, 6, 7, 1000, 9, 10, 11, 12, 13, 14, 15]
 ```
 
-The real world use case something like [Fast Fourier Transform Demo](https://github.com/duckki/field-fft-mojo/blob/main/python/fft-python.py#L15) where the Python-style slices are readable and efficient.
+The real world use case is something like [Fast Fourier Transform Demo](https://github.com/duckki/field-fft-mojo/blob/main/python/fft-python.py#L15) where the Python-style slices are readable and efficient.
