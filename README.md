@@ -1,5 +1,9 @@
 # Mojo Reference Demo - Mojo v24.1.0
 
+[![Run Tests](https://github.com/mikowals/dynamic_vector.mojo/actions/workflows/test.yml/badge.svg)](https://github.com/mikowals/dynamic_vector.mojo/actions/workflows/test.yml)
+
+[Mojo🔥](https://github.com/modularml/mojo)  test runner using [pytest](https://docs.pytest.org).
+
 An experimental drop in replacement for DynamicVector. It almost certainly has some bugs and it is likely that the nice things it does with References will be implemented in the Standard Library in a more reliable way shortly. But it shows why References are useful and demonstrates new features like `__refitem__` and `__lifetime_of(self)`.
 
 The repo contains:
