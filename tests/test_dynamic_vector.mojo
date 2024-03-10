@@ -3,6 +3,17 @@ from testing import assert_equal
 from tests.utils import MojoTest
 
 
+@value
+struct Settable(CollectionElement):
+    var value: Int
+
+    fn set_value(inout self, v: Int):
+        self.value = v
+
+    fn get_value(self) -> Int:
+        return self.value
+
+
 fn append_values(inout v: DynamicVector[String], *vals: String) raises:
     for i in range(len(vals)):
         v.append(vals[i])
@@ -85,12 +96,13 @@ fn test_capacity_increase() raises:
 
 fn test_getitem() raises:
     var test = MojoTest("getitem")
-    var v = DynamicVector[Int](capacity=2)
-    append_values(v, 1, 2)
-    test.match_values(v, 1, 2)
+    var v = DynamicVector[Settable](capacity=2)
+    v.push_back(Settable(1))
+    v.push_back(Settable(2))
     var a = v[0]
-    a = 2
-    test.assert_equal(v[0], 1, "still value 1")
+    a.set_value(100)
+    test.assert_equal(a.get_value(), 100, "value 200")
+    test.assert_equal(v[0].get_value(), 1, "still value 1")
 
 
 fn test_setitem() raises:
@@ -195,6 +207,27 @@ fn test_reverse_odd() raises:
     test.match_values(v, "d", "c", "b", "a")
 
 
+fn test_iter() raises:
+    var test = MojoTest("iter")
+    var v = DynamicVector[Int](capacity=5)
+    append_values(v, 1, 2, 3, 4)
+    var sum = 0
+    for i in v:
+        sum += i[]
+    test.assert_equal(sum, 10, "sum 10")
+
+
+fn test_iter_next() raises:
+    var test = MojoTest("iter_next")
+    var v = DynamicVector[Int](capacity=5)
+    append_values(v, 1, 2, 3, 4)
+    var iter = v.__iter__()
+    test.assert_equal(len(iter), 4, "iter length 4")
+    var val = iter.__next__()
+    test.assert_equal(val[], 1, "value 1")
+    test.assert_equal(len(iter), 3, "iter length 3")
+
+
 fn main() raises:
     test_create_dynamic_vector()
     test_push_back()
@@ -214,3 +247,5 @@ fn main() raises:
     test_extend()
     test_reverse_even()
     test_reverse_odd()
+    test_iter()
+    test_iter_next()

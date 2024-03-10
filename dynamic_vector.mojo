@@ -1,6 +1,10 @@
 from memory.anypointer import AnyPointer
 from algorithm.swap import swap
 
+alias i1 = __mlir_type.i1
+alias i1_1 = __mlir_attr.`1: i1`
+alias i1_0 = __mlir_attr.`0: i1`
+
 
 struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
     var data: AnyPointer[T]
@@ -51,12 +55,18 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
         self.size -= 1
         return (self.data + self.size).take_value()
 
-    # TODO: Redo with mutability param, see discord discussion
-    @always_inline
-    fn __refitem__(
-        inout self, index: Int
-    ) -> Reference[T, __mlir_attr.`1: i1`, __lifetime_of(self)]:
-        return self.data.__refitem__(index)
+    fn __refitem__[
+        mutability: i1,
+        lifetime: AnyLifetime[mutability].type,
+    ](
+        self: Reference[Self, mutability, lifetime].mlir_ref_type,
+        index: Int,
+    ) -> Reference[T, mutability, lifetime]:
+        return Reference(
+            __mlir_op.`lit.ref.from_pointer`[
+                _type = Reference[T, mutability, lifetime].mlir_ref_type
+            ]((Reference(self)[].data + index).value)
+        )
 
     @always_inline
     fn reserve(inout self, new_capacity: Int):
@@ -112,13 +122,6 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
             a = a + 1
             b = b - 1
 
-    # TODO: Redo with __refitem__ as described in discord
-    @always_inline
-    fn __getitem__(self, index: Int) -> T:
-        # Made this immutable but I don't think it has any impact, deref before return makes it immuatable
-        # but compiler doens't like self.__refitem__ use without an inout self, so wrap in Reference
-        return Reference[T, __mlir_attr.`0: i1`](self.data.__refitem__(index))[]
-
     @always_inline
     fn __getitem__(
         inout self, _slice: Slice
@@ -129,19 +132,25 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
     fn __len__(self) -> Int:
         return self.size
 
+    @always_inline
+    fn __iter__(
+        inout self,
+    ) -> _DynamicVectorIter[T, i1_1, __lifetime_of(self)]:
+        return _DynamicVectorIter[T, i1_1, __lifetime_of(self)](Reference(self))
+
 
 @value
 struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
     Sized, CollectionElement
 ):
-    var data: Reference[DynamicVector[T], __mlir_attr.`1: i1`, L]
+    var data: Reference[DynamicVector[T], i1_1, L]
     var _slice: Slice
     var size: Int
 
     @always_inline
     fn __init__(
         inout self,
-        data: Reference[DynamicVector[T], __mlir_attr.`1: i1`, L],
+        data: Reference[DynamicVector[T], i1_1, L],
         _slice: Slice,
     ):
         self.data = data
@@ -269,3 +278,31 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
     @staticmethod
     fn get_size(start: Int, end: Int, step: Int) -> Int:
         return math.max(0, (end - start + (step - (1 if step > 0 else -1))) // step)
+
+
+@value
+struct _DynamicVectorIter[
+    T: CollectionElement, mutability: i1, lifetime: AnyLifetime[mutability].type
+](CollectionElement, Sized):
+    var index: Int
+    var src: Reference[DynamicVector[T], mutability, lifetime]
+
+    @always_inline
+    fn __init__(inout self, src: Reference[DynamicVector[T], mutability, lifetime]):
+        self.index = 0
+        self.src = src
+
+    @always_inline
+    fn __next__(inout self) -> Reference[T, mutability, lifetime]:
+        var res = Reference(
+            __mlir_op.`lit.ref.from_pointer`[
+                _type = Reference[T, mutability, lifetime].mlir_ref_type
+            ]((self.src[].data + self.index).value)
+        )
+
+        self.index += 1
+        return res
+
+    @always_inline
+    fn __len__(self) -> Int:
+        return len(self.src[]) - self.index
