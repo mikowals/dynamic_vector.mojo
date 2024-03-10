@@ -3,6 +3,16 @@ from testing import assert_equal
 from tests.utils import MojoTest
 
 
+fn append_values(inout v: DynamicVector[String], *vals: String) raises:
+    for i in range(len(vals)):
+        v.append(vals[i])
+
+
+fn append_values(inout v: DynamicVector[Int], *vals: Int) raises:
+    for i in range(len(vals)):
+        v.append(vals[i])
+
+
 fn test_create_dynamic_vector() raises:
     var test = MojoTest("create DynamicVector")
     var v = DynamicVector[Int](capacity=2)
@@ -14,29 +24,19 @@ fn test_push_back() raises:
     var test = MojoTest("push_back")
     var v = DynamicVector[Int](capacity=2)
     v.push_back(1)
-    test.assert_equal(len(v), 1, "size 1")
-    test.assert_equal(v[0], 1, "value 1")
     v.push_back(2)
-    test.assert_equal(len(v), 2, "size 2")
-    test.assert_equal(v[1], 2, "value 2")
     v.push_back(3)
     test.assert_equal(len(v), 3, "size 3")
-    test.assert_equal(v[2], 3, "value 3")
+    test.match_values(v, 1, 2, 3)
     test.assert_equal(v.capacity, 4, "capacity 4")
 
 
 fn test_append() raises:
     var test = MojoTest("append")
     var v = DynamicVector[String](capacity=2)
-    v.append(String("abc"))
-    test.assert_equal(len(v), 1, "size 1")
-    test.assert_equal(v[0], "abc", "value abc")
-    v.append(String("def"))
-    test.assert_equal(len(v), 2, "size 2")
-    test.assert_equal(v[1], "def", "value def")
-    v.append(String("ghi"))
+    append_values(v, "abc", "def", "ghi")
     test.assert_equal(len(v), 3, "size 3")
-    test.assert_equal(v[2], "ghi", "value ghi")
+    test.match_values(v, "abc", "def", "ghi")
     test.assert_equal(v.capacity, 4, "capacity 4")
 
 
@@ -45,16 +45,14 @@ fn test_resize() raises:
     var v = DynamicVector[Int](capacity=1)
     v.resize(2, 7)
     test.assert_equal(len(v), 2, "size = 2")
-    test.assert_equal(v[0], 7, "value 7")
-    test.assert_equal(v[1], 7, "value 7")
+    test.match_values(v, 7, 7)
     test.assert_equal(v.capacity, 2, "capacity = 2")
 
 
 fn test_resize_smaller() raises:
-    var test = MojoTest("smaller resize")
+    var test = MojoTest("resize smaller")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
+    append_values(v, 1, 2)
     v.resize(1)
     test.assert_equal(len(v), 1, "size now 1")
     test.assert_equal(v[0], 1, "value 1")
@@ -64,9 +62,7 @@ fn test_resize_smaller() raises:
 fn test_pop_back() raises:
     var test = MojoTest("pop_back")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
-    v.push_back(3)
+    append_values(v, 1, 2, 3)
     var val = v.pop_back()
     test.assert_equal(len(v), 2, "size 2")
     test.assert_equal(val, 3, "value 3")
@@ -81,24 +77,17 @@ fn test_pop_back() raises:
 fn test_capacity_increase() raises:
     var test = MojoTest("capacity increase")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
-    v.push_back(3)
+    append_values(v, 1, 2, 3)
     test.assert_equal(v.capacity, 4, "capacity 4")
     v.push_back(4)
-    test.assert_equal(v[0], 1, "still value 1")
-    test.assert_equal(v[1], 2, "still value 2")
-    test.assert_equal(v[2], 3, "value 3")
-    test.assert_equal(v[3], 4, "value 4")
+    test.match_values(v, 1, 2, 3, 4)
 
 
 fn test_getitem() raises:
     var test = MojoTest("getitem")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
-    test.assert_equal(v[0], 1, "value 1")
-    test.assert_equal(v[1], 2, "value 2")
+    append_values(v, 1, 2)
+    test.match_values(v, 1, 2)
     var a = v[0]
     a = 2
     test.assert_equal(v[0], 1, "still value 1")
@@ -107,22 +96,18 @@ fn test_getitem() raises:
 fn test_setitem() raises:
     var test = MojoTest("setitem")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
+    append_values(v, 1, 2)
     v[0] = 3
-    test.assert_equal(v[0], 3, "value 3")
-    test.assert_equal(v[1], 2, "value 2")
+    test.match_values(v, 3, 2)
 
 
 fn test_copyinit() raises:
     var test = MojoTest("copyinit")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
+    append_values(v, 1, 2)
     var v2 = v
     test.assert_equal(len(v2), 2, "size 2")
-    test.assert_equal(v2[0], 1, "value 1")
-    test.assert_equal(v2[1], 2, "value 2")
+    test.match_values(v2, 1, 2)
     v2[0] = 3
     test.assert_equal(v2[0], 3, "value 3")
     test.assert_equal(v[0], 1, "value still 1")
@@ -132,12 +117,10 @@ fn test_moveinit() raises:
     var test = MojoTest("moveinit")
     var v = DynamicVector[Int](capacity=2)
     var orig_ptr = v.data
-    v.push_back(1)
-    v.push_back(2)
+    append_values(v, 1, 2)
     var v2 = v ^
     test.assert_equal(len(v2), 2, "size 2")
-    test.assert_equal(v2[0], 1, "value 1")
-    test.assert_equal(v2[1], 2, "value 2")
+    test.match_values(v2, 1, 2)
     v2[0] = 3
     test.assert_equal(v2[0], 3, "value 3")
     test.assert_true(orig_ptr == v2.data, "data pointer is the same")
@@ -158,8 +141,7 @@ fn test_delete() raises:
 fn test_refitem() raises:
     var test = MojoTest("refitem")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
+    append_values(v, 1, 2)
     var ref = v.__refitem__(0)
     var x = ref.mlir_ref_type
     test.assert_equal(ref[], 1, "value 1")
@@ -168,9 +150,7 @@ fn test_refitem() raises:
 fn test_slice() raises:
     var test = MojoTest("slice")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
-    v.push_back(3)
+    append_values(v, 1, 2, 3)
     var slice = v.__getitem__(Slice(1, 3))
     test.assert_equal(len(slice), 2, "slice length = 2")
     test.assert_equal(slice[1], 3, "value 3")
@@ -181,8 +161,7 @@ fn test_slice() raises:
 fn test_clear() raises:
     var test = MojoTest("clear")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
+    append_values(v, 1, 2)
     v.clear()
     test.assert_equal(len(v), 0, "size 0")
     test.assert_equal(v.capacity, 2, "capacity 2")
@@ -191,15 +170,12 @@ fn test_clear() raises:
 fn test_extend() raises:
     var test = MojoTest("extend")
     var v = DynamicVector[Int](capacity=2)
-    v.push_back(1)
-    v.push_back(2)
+    append_values(v, 1, 2)
     var v2 = DynamicVector[Int](capacity=2)
-    v2.push_back(3)
-    v2.push_back(4)
+    append_values(v2, 3, 4)
     v.extend(v2)
     test.assert_equal(len(v), 4, "size 4")
-    test.assert_equal(v[2], 3, "value 3")
-    test.assert_equal(v[3], 4, "value 4")
+    test.match_values(v, 1, 2, 3, 4)
     test.assert_equal(v.capacity, 4, "capacity 4")
 
 
