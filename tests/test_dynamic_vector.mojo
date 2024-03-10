@@ -228,6 +228,18 @@ fn test_iter_next() raises:
     test.assert_equal(len(iter), 3, "iter length 3")
 
 
+fn test_steal_data() raises:
+    var test = MojoTest("steal_data")
+    var v = DynamicVector[Int](capacity=2)
+    var orig_data = v.data
+    append_values(v, 1, 2)
+    var data = v.steal_data()
+    test.assert_equal(len(v), 0, "vector size 0")
+    test.assert_equal(v.capacity, 0, "vector capacity 0")
+    test.assert_true(not v.data, "vector data is null")
+    test.assert_equal(data, orig_data, "stolen pointer is the original data")
+
+
 fn main() raises:
     test_create_dynamic_vector()
     test_push_back()
@@ -249,3 +261,4 @@ fn main() raises:
     test_reverse_odd()
     test_iter()
     test_iter_next()
+    test_steal_data()

@@ -131,6 +131,14 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
     ) -> _DynamicVectorIter[T, i1_1, __lifetime_of(self)]:
         return _DynamicVectorIter[T, i1_1, __lifetime_of(self)](Reference(self))
 
+    @always_inline
+    fn steal_data(inout self) -> AnyPointer[T]:
+        var res = self.data
+        self.data = AnyPointer[T]()
+        self.size = 0
+        self.capacity = 0
+        return res
+
 
 @value
 struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
