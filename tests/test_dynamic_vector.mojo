@@ -64,7 +64,7 @@ fn test_resize_smaller() raises:
     var test = MojoTest("resize smaller")
     var v = DynamicVector[Int](capacity=2)
     append_values(v, 1, 2)
-    v.resize(1)
+    v.resize(1, 0)
     test.assert_equal(len(v), 1, "size now 1")
     test.assert_equal(v[0], 1, "value 1")
     test.assert_equal(v.capacity, 2, "capacity still 2")
