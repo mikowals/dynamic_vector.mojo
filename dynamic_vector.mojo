@@ -39,7 +39,7 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
     fn append(inout self, owned value: T):
         if self.size == self.capacity:
             self.reserve(self.capacity * 2)
-        Reference(self.data.__refitem__(self.size))[] = value ^
+        self.data[self.size] = value ^
         self.size += 1
 
     fn push_back(inout self, owned value: T):
@@ -113,10 +113,6 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
         inout self, _slice: Slice
     ) -> DynamicVectorSlice[T, __lifetime_of(self)]:
         return DynamicVectorSlice[T](Reference(self), _slice)
-
-    @always_inline
-    fn __setitem__(inout self, index: Int, owned value: T):
-        self.data[index] = value ^
 
     @always_inline
     fn __len__(self) -> Int:
