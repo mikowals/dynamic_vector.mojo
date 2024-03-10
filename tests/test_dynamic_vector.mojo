@@ -179,6 +179,22 @@ fn test_extend() raises:
     test.assert_equal(v.capacity, 4, "capacity 4")
 
 
+fn test_reverse_even() raises:
+    var test = MojoTest("reverse")
+    var v = DynamicVector[String](capacity=5)
+    append_values(v, "a", "b", "c", "d", "e")
+    v.reverse()
+    test.match_values(v, "e", "d", "c", "b", "a")
+
+
+fn test_reverse_odd() raises:
+    var test = MojoTest("reverse")
+    var v = DynamicVector[String](capacity=5)
+    append_values(v, "a", "b", "c", "d")
+    v.reverse()
+    test.match_values(v, "d", "c", "b", "a")
+
+
 fn main() raises:
     test_create_dynamic_vector()
     test_push_back()
@@ -196,3 +212,5 @@ fn main() raises:
     test_slice()
     test_clear()
     test_extend()
+    test_reverse_even()
+    test_reverse_odd()

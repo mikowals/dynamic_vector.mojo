@@ -1,4 +1,5 @@
 from memory.anypointer import AnyPointer
+from algorithm.swap import swap
 
 
 struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
@@ -100,6 +101,16 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
             (other.data + i).move_into(self.data + self.size + i)
         self.size += len(other)
         other.size = 0
+
+    @always_inline
+    fn reverse(inout self):
+        var a = self.data
+        var b = self.data + self.size - 1
+        while a < b:
+            # a[0] and b[0] is using AnyPointer.__refitem__ and automatic dereference
+            swap[T](a[0], b[0])
+            a = a + 1
+            b = b - 1
 
     # TODO: Redo with __refitem__ as described in discord
     @always_inline
