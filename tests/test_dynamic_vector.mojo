@@ -1,6 +1,6 @@
 from dynamic_vector import DynamicVector, DynamicVectorSlice
 from testing import assert_equal
-from tests.utils import MojoTest
+from tests.utils import MojoTest, append_values
 
 
 @value
@@ -12,16 +12,6 @@ struct Settable(CollectionElement):
 
     fn get_value(self) -> Int:
         return self.value
-
-
-fn append_values(inout v: DynamicVector[String], *vals: String) raises:
-    for i in range(len(vals)):
-        v.append(vals[i])
-
-
-fn append_values(inout v: DynamicVector[Int], *vals: Int) raises:
-    for i in range(len(vals)):
-        v.append(vals[i])
 
 
 fn test_create_dynamic_vector() raises:

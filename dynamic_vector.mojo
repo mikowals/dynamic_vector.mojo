@@ -142,7 +142,8 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
         return res
 
 
-@value
+# Avoid __init__(Ref, Slice, Size) initializer because we calculate size.
+@register_passable
 struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
     Sized, CollectionElement
 ):
@@ -165,33 +166,25 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
         inout self,
         other: Self,
         _slice: Slice,
-    ):
+    ) raises:
         self.data = other.data
         self._slice = Self.adapt_slice(_slice, other._slice, len(other))
         self.size = Self.get_size(self._slice.start, self._slice.end, self._slice.step)
 
-    @always_inline
-    fn __getitem__(self, index: Int) raises -> T:
-        var underlying_index = self._slice.start + index * self._slice.step
-        if underlying_index >= self._slice.end:
-            raise Error(
-                String("Index ")
-                + underlying_index
-                + " is outside range "
-                + self._slice.start
-                + " - "
-                + self._slice.end
-                + "."
-            )
-        return self.data[][self._slice.start + index * self._slice.step]
+    fn __copyinit__(inout self, other: Self):
+        self.data = other.data
+        self._slice = other._slice
+        self.size = other.size
 
     @always_inline
-    fn __getitem__(inout self, _slice: Slice) -> Self:
+    fn __refitem__(self, index: Int) -> Reference[T, i1_1, L]:
+        return self.data[].data.__refitem__(
+            self._slice.start + index * self._slice.step
+        )
+
+    @always_inline
+    fn __getitem__(inout self, _slice: Slice) raises -> Self:
         return Self(self, _slice)
-
-    @always_inline
-    fn __setitem__(inout self, index: Int, owned value: T):
-        self.data[][self._slice.start + index * self._slice.step] = value ^
 
     @always_inline
     fn __len__(self) -> Int:
@@ -224,62 +217,81 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
 
     @always_inline
     @staticmethod
-    fn adapt_slice(_slice: Slice, base_slice: Slice, dim: Int) -> Slice:
+    fn adapt_slice(_slice: Slice, base_slice: Slice, dim: Int) raises -> Slice:
         var res = Self.adapt_slice(_slice, dim)
         res.start = base_slice.start + res.start * base_slice.step
-        res.end = base_slice.start + res.end * base_slice.step
+        if res.start > base_slice.end:
+            raise Error(
+                String("Slice start value outside base bounds: ")
+                + res.start
+                + "("
+                + base_slice.start
+                + " + "
+                + res.start
+                + " * "
+                + base_slice.step
+                + ")"
+                + " > "
+                + base_slice.end
+            )
+        res.end = math.min(base_slice.end, base_slice.start + res.end * base_slice.step)
         res.step *= base_slice.step
 
         return res
 
     @always_inline
-    fn __setitem__(inout self, _slice: Slice, owned value: Self):
-        var base_slice = Self.adapt_slice(_slice, self._slice, len(self))
-        if len(value) != (base_slice.end - base_slice.start) // base_slice.step:
-            print(
-                "slice assignment size mismatch",
-                len(value),
-                (base_slice.end - base_slice.start) // base_slice.step,
-                base_slice.start,
-                base_slice.end,
-                base_slice.step,
+    fn __setitem__(
+        inout self, _slice: Slice, owned value: DynamicVectorSlice[T]
+    ) raises:
+        var target_slice = DynamicVectorSlice[T](self, _slice)
+        if len(target_slice) != len(value):
+            raise Error(
+                String("slice assignment size mismatch: received ")
+                + len(value)
+                + "new values but destination expects "
+                + len(target_slice)
             )
-            return
-
-        for i in range((_slice.end - _slice.start) // _slice.step):
-            var dest = self.data[].data + base_slice.start + i * base_slice.step
-            _ = (dest).take_value()
-            (value.data[].data + i).move_into(dest)
+        for i in range(len(target_slice)):
+            target_slice[i] = value[i]
 
     @always_inline
-    fn __setitem__[
-        l: MutLifetime
-    ](inout self, _slice: Slice, owned value: DynamicVectorSlice[T, l]) raises:
-        var base_slice = Self.adapt_slice(_slice, self._slice, len(self))
-        if len(value) != (base_slice.end - base_slice.start) // base_slice.step:
-            raise Error(
-                String("slice assignment size mismatch")
-                + len(value)
-                + (base_slice.end - base_slice.start) // base_slice.step
-                + base_slice.start
-                + base_slice.end
-                + base_slice.step
-            )
-
-        for i in range((_slice.end - _slice.start) // _slice.step):
-            var dest = self.data[].data + base_slice.start + i * base_slice.step
-            var src = value.data[].data + value._get_base_offset(0, i)
-            _ = (dest).take_value()
-            src.move_into(dest)
+    fn __setitem__(inout self, _slice: Slice, owned value: DynamicVector[T]) raises:
+        self.__setitem__(
+            _slice, DynamicVectorSlice[T](Reference(value), Slice(0, len(value), 1))
+        )
 
     @always_inline
     fn _get_base_offset(self, start: Int, steps: Int, stride: Int = 1) -> Int:
         return self._slice.start + start + steps * self._slice.step * stride
 
     @always_inline
+    fn __iter__(inout self) -> _DynamicVectorSliceIter[T, L]:
+        return _DynamicVectorSliceIter[T, L](self)
+
+    @always_inline
     @staticmethod
     fn get_size(start: Int, end: Int, step: Int) -> Int:
         return math.max(0, (end - start + (step - (1 if step > 0 else -1))) // step)
+
+    # Useful print method for debugging
+    # Static with T = Int because T might not be Stringable
+    @staticmethod
+    fn to_string(inout vec: DynamicVectorSlice[Int], name: String) raises -> String:
+        var res = String(name + " (size = " + len(vec) + ") [")
+        for val in vec:
+            res += String(val[]) + ", "
+
+        return res[:-2] + "]"
+
+    # Useful print method for debugging
+    # Static with T = String because T might not be Stringable
+    @staticmethod
+    fn to_string(inout vec: DynamicVectorSlice[String], name: String) raises -> String:
+        var res = String(name + " (size = " + len(vec) + ") [")
+        for val in vec:
+            res += val[] + ", "
+
+        return res[:-2] + "]"
 
 
 @value
@@ -310,3 +322,26 @@ struct _DynamicVectorIter[
     @always_inline
     fn __len__(self) -> Int:
         return len(self.src[]) - self.index
+
+
+@value
+struct _DynamicVectorSliceIter[T: CollectionElement, lifetime: MutLifetime](
+    CollectionElement, Sized
+):
+    var index: Int
+    var src: DynamicVectorSlice[T, lifetime]
+
+    @always_inline
+    fn __init__(inout self, src: DynamicVectorSlice[T, lifetime]):
+        self.index = 0
+        self.src = src
+
+    @always_inline
+    fn __next__(inout self) -> Reference[T, i1_1, lifetime]:
+        var res = self.src.__refitem__(self.index)
+        self.index += 1
+        return res
+
+    @always_inline
+    fn __len__(self) -> Int:
+        return len(self.src) - self.index

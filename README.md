@@ -13,6 +13,7 @@ The repo contains:
 - verbose.mojo - [demonstrates](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#__setitem__-works-much-better-with-references) avoiding extra copies and deletes.
 - vector_benchmark.mojo - shows [time savings](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#time-savings-when-updating-struct-elements) when updating a 256 x 256 vector of vectors.
 - slice.mojo - [exercises DynamicVectorSlice](https://github.com/mikowals/dynamic_vector.mojo/tree/main?tab=readme-ov-file#python-style-slices---var-evens--vec02) and `vec[::]` notation.
+- Usage examples in [tests/test_dynamic_vector.mojo](tests/test_dynamic_vector.mojo) and [tests/test_dynamic_vector_slice.mojo](tests/test_dynamic_vector_slice.mojo)
 
 # `__setitem__` works much better with References
 
@@ -83,6 +84,9 @@ after slice_2[2] = 1000
 slice_2 = slice_1[0::2] (size = 4) [0, 4, 1000, 12]
 slice_1 = vec[0::2] (size = 8) [0, 2, 4, 6, 1000, 10, 12, 14]
 original vec (size = 16) [0, 1, 2, 3, 4, 5, 6, 7, 1000, 9, 10, 11, 12, 13, 14, 15]
+
+after vec[1:3] = [100, 200]
+original vec (size = 16) [0, 100, 200, 3, 4, 5, 6, 7, 1000, 9, 10, 11, 12, 13, 14, 15]
 ```
 
 The real world use case is something like [Fast Fourier Transform Demo](https://github.com/duckki/field-fft-mojo/blob/main/python/fft-python.py#L15) where the Python-style slices are readable and efficient.
