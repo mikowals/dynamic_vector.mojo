@@ -55,6 +55,8 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
         self.size -= 1
         return (self.data + self.size).take_value()
 
+    # TODO: Check if this can be simplified after #1921 was fixed.
+    # Mojo #1921: https://github.com/modularml/mojo/issues/1921#event-12066222345
     fn __refitem__[
         mutability: i1,
         lifetime: AnyLifetime[mutability].type,
@@ -169,17 +171,17 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
         self.size = Self.get_size(self._slice.start, self._slice.end, self._slice.step)
 
     @always_inline
-    fn __getitem__(self, index: Int) -> T:
+    fn __getitem__(self, index: Int) raises -> T:
         var underlying_index = self._slice.start + index * self._slice.step
         if underlying_index >= self._slice.end:
-            print(
-                "slice index out of range.  Index ",
-                underlying_index,
-                "is outside range",
-                self._slice.start,
-                "-",
-                self._slice.end,
-                ".",
+            raise Error(
+                String("Index ")
+                + underlying_index
+                + " is outside range "
+                + self._slice.start
+                + " - "
+                + self._slice.end
+                + "."
             )
         return self.data[][self._slice.start + index * self._slice.step]
 
@@ -196,7 +198,7 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
         return self.size
 
     @always_inline
-    fn to_vector(self) -> DynamicVector[T]:
+    fn to_vector(self) raises -> DynamicVector[T]:
         var res = DynamicVector[T](capacity=len(self))
         for i in range(len(self)):
             res.append(self[i])
@@ -252,18 +254,17 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
     @always_inline
     fn __setitem__[
         l: MutLifetime
-    ](inout self, _slice: Slice, owned value: DynamicVectorSlice[T, l]):
+    ](inout self, _slice: Slice, owned value: DynamicVectorSlice[T, l]) raises:
         var base_slice = Self.adapt_slice(_slice, self._slice, len(self))
         if len(value) != (base_slice.end - base_slice.start) // base_slice.step:
-            print(
-                "slice assignment size mismatch",
-                len(value),
-                (base_slice.end - base_slice.start) // base_slice.step,
-                base_slice.start,
-                base_slice.end,
-                base_slice.step,
+            raise Error(
+                String("slice assignment size mismatch")
+                + len(value)
+                + (base_slice.end - base_slice.start) // base_slice.step
+                + base_slice.start
+                + base_slice.end
+                + base_slice.step
             )
-            return
 
         for i in range((_slice.end - _slice.start) // _slice.step):
             var dest = self.data[].data + base_slice.start + i * base_slice.step
@@ -293,6 +294,8 @@ struct _DynamicVectorIter[
         self.index = 0
         self.src = src
 
+    # TODO: Check if this can be simplified after #1921 was fixed.
+    # Mojo #1921: https://github.com/modularml/mojo/issues/1921#event-12066222345
     @always_inline
     fn __next__(inout self) -> Reference[T, mutability, lifetime]:
         var res = Reference(
