@@ -23,7 +23,7 @@ fn to_string(vec: DynamicVectorSlice[Int], name: String) raises -> String:
 
 
 fn test_create_slice() raises:
-    var test = MojoTest("create DynamicVectorSlice")
+    var test = MojoTest("create")
     var vec = DynamicVector[String](capacity=4)
     append_values(vec, "a", "b", "c", "d")
     var slice = DynamicVectorSlice[String](Reference(vec), Slice(1, 3))
@@ -104,11 +104,11 @@ fn test_slice_multple_slices() raises:
         "p",
     )
     var slice1 = DynamicVectorSlice[String](Reference(vec), Slice(0, 16, 2))
-    test.match_slice(slice1._slice, Slice(0, 16, 2), "multiple slices")
+    test.match_slice(slice1._slice, Slice(0, 16, 2), "multiple slices 1")
     var slice2 = slice1[1::3]
-    test.match_slice(slice2._slice, Slice(2, 16, 6), "multiple slices")
+    test.match_slice(slice2._slice, Slice(2, 16, 6), "multiple slices 2")
     var slice3 = slice2[1::2]
-    test.match_slice(slice3._slice, Slice(8, 16, 12), "multiple slices")
+    test.match_slice(slice3._slice, Slice(8, 16, 12), "multiple slices 3")
     test.match_values(slice3, "i")
 
 
@@ -135,7 +135,6 @@ fn test_slice_assignment_from_slice() raises:
         Slice(0, 2),
         DynamicVectorSlice[String](Reference(vec2), Slice(0, 2)),
     )
-
     test.match_values(vec, "y", "z", "c", "d")
 
 
