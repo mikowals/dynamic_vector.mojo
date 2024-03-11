@@ -159,7 +159,7 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
     ):
         self.data = data
         self._slice = Self.adapt_slice(_slice, len(data[]))
-        self.size = Self.get_size(self._slice.start, self._slice.end, self._slice.step)
+        self.size = len(self._slice)
 
     @always_inline
     fn __init__(
@@ -169,7 +169,7 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
     ) raises:
         self.data = other.data
         self._slice = Self.adapt_slice(_slice, other._slice, len(other))
-        self.size = Self.get_size(self._slice.start, self._slice.end, self._slice.step)
+        self.size = len(self._slice)
 
     fn __copyinit__(inout self, other: Self):
         self.data = other.data
@@ -178,9 +178,7 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
 
     @always_inline
     fn __refitem__(self, index: Int) -> Reference[T, i1_1, L]:
-        return self.data[].data.__refitem__(
-            self._slice.start + index * self._slice.step
-        )
+        return self.data[].data.__refitem__(self._slice[index])
 
     @always_inline
     fn __getitem__(inout self, _slice: Slice) raises -> Self:
@@ -200,43 +198,20 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
     @always_inline
     @staticmethod
     fn adapt_slice(_slice: Slice, dim: Int) -> Slice:
-        var res = _slice
-        if res.start < 0:
-            res.start += dim
-        if not _slice._has_end():
-            res.end = dim
-        if res.end < 0:
-            res.end += dim
-        if res.end > dim:
-            res.end = dim
+        var start = _slice.start if _slice.start >= 0 else _slice.start + dim
+        var end = dim
+        if _slice._has_end():
+            end = _slice.end if _slice.end >= 0 else _slice.end + dim
 
-        if res.end < res.start:
-            res.end = res.start
-
-        return res
+        return slice(start, end, _slice.step)
 
     @always_inline
     @staticmethod
-    fn adapt_slice(_slice: Slice, base_slice: Slice, dim: Int) raises -> Slice:
+    fn adapt_slice(_slice: Slice, base_slice: Slice, dim: Int) -> Slice:
         var res = Self.adapt_slice(_slice, dim)
-        res.start = base_slice.start + res.start * base_slice.step
-        if res.start > base_slice.end:
-            raise Error(
-                String("Slice start value outside base bounds: ")
-                + res.start
-                + "("
-                + base_slice.start
-                + " + "
-                + res.start
-                + " * "
-                + base_slice.step
-                + ")"
-                + " > "
-                + base_slice.end
-            )
-        res.end = math.min(base_slice.end, base_slice.start + res.end * base_slice.step)
+        res.start = math.min(base_slice.end, base_slice[res.start])
+        res.end = math.min(base_slice.end, base_slice[res.end])
         res.step *= base_slice.step
-
         return res
 
     @always_inline
@@ -261,17 +236,8 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
         )
 
     @always_inline
-    fn _get_base_offset(self, start: Int, steps: Int, stride: Int = 1) -> Int:
-        return self._slice.start + start + steps * self._slice.step * stride
-
-    @always_inline
     fn __iter__(inout self) -> _DynamicVectorSliceIter[T, L]:
         return _DynamicVectorSliceIter[T, L](self)
-
-    @always_inline
-    @staticmethod
-    fn get_size(start: Int, end: Int, step: Int) -> Int:
-        return math.max(0, (end - start + (step - (1 if step > 0 else -1))) // step)
 
     # Useful print method for debugging
     # Static with T = Int because T might not be Stringable
