@@ -309,13 +309,8 @@ struct _DynamicVectorIter[
     # TODO: Check if this can be simplified after #1921 was fixed.
     # Mojo #1921: https://github.com/modularml/mojo/issues/1921#event-12066222345
     @always_inline
-    fn __next__(inout self) -> Reference[T, mutability, lifetime]:
-        var res = Reference(
-            __mlir_op.`lit.ref.from_pointer`[
-                _type = Reference[T, mutability, lifetime].mlir_ref_type
-            ]((self.src[].data + self.index).value)
-        )
-
+    fn __next__(inout self) -> Reference[T, i1_0, lifetime]:
+        var res = self.src[].__refitem__(self.index)
         self.index += 1
         return res
 
