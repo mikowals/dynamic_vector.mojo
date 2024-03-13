@@ -23,21 +23,26 @@ struct MojoTest:
         except e:
             print(e)
 
-    fn assert_equal(self, a: Int, b: Int, message: String):
+    fn assert_equal(self, a: Int, b: Int, label: String):
         """
         Wraps testing.assert_equal.
         """
         try:
-            testing.assert_equal(a, b, message)
+            testing.assert_equal(
+                a, b, String("Actual ") + label + " '" + a + "', expected '" + b + "'."
+            )
+
         except e:
             print(e)
 
-    fn assert_equal(self, a: String, b: String, message: String):
+    fn assert_equal(self, a: String, b: String, label: String):
         """
         Wraps testing.assert_equal.
         """
         try:
-            testing.assert_equal(a, b, message)
+            testing.assert_equal(
+                a, b, String("Actual ") + label + " '" + a + "', expected '" + b + "'."
+            )
         except e:
             print(e)
 
