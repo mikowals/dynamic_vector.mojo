@@ -103,6 +103,17 @@ fn test_negative_stride_sugared() raises:
     test.match_values(slice2, "d", "c", "b", "a")
 
 
+fn test_chained_negative_stride_sugared() raises:
+    var test = MojoTest("chained negative stride sugared")
+    var vec = DynamicVector[String](capacity=4)
+    append_values(vec, "a", "b", "c", "d")
+    var slice = DynamicVectorSlice[String](Reference(vec), Python3Slice(0, 4, 1))
+    var slice2 = slice[::-1]
+    var slice3 = slice2[:2:-1]
+    test.match_slice(slice3._slice, Slice(0, 1, 1), "negative stride sugared")
+    test.match_values(slice3, "a")
+
+
 fn test_chained_slices() raises:
     var test = MojoTest("chained slices")
     var vec = DynamicVector[String](capacity=4)
@@ -142,6 +153,37 @@ fn test_chained_strided_slices() raises:
     var slice3 = slice2[1::2]
     test.match_slice(slice3._slice, Slice(8, 16, 12), "multiple slices 3")
     test.match_values(slice3, "i")
+
+
+fn test_chained_strided_slices_with_negative_strides() raises:
+    var test = MojoTest("chained strided slices with negative strides")
+    var vec = DynamicVector[String](capacity=16)
+    append_values(
+        vec,
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+    )
+    var slice1 = DynamicVectorSlice[String](Reference(vec), Python3Slice(15, None, -2))
+    test.match_slice(slice1._slice, Slice(15, -1, -2), "multiple slices 1")
+    var slice2 = slice1[1::3]
+    test.match_slice(slice2._slice, Slice(13, -1, -6), "multiple slices 2")
+    var slice3 = slice2[1::-2]
+    test.match_slice(slice3._slice, Slice(7, 14, 12), "multiple slices 3")
+    test.match_values(slice3, "h")
 
 
 fn test_setitem() raises:
@@ -216,8 +258,10 @@ fn main() raises:
     test_stride()
     test_negative_stride()
     test_negative_stride_sugared()
+    test_chained_negative_stride_sugared()
     test_chained_slices()
     test_chained_strided_slices()
+    test_chained_strided_slices_with_negative_strides()
     test_setitem()
     test_assignment_from_slice()
     test_assignment_from_vector()

@@ -120,6 +120,12 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
             a = a + 1
             b = b - 1
 
+    # This is only required if self is in an alias.
+    # Otherwise it tries next __getitem__ where self is inout so an immuatable alias there causes error.
+    @always_inline
+    fn __getitem__(self, index: Int) -> T:
+        return self.data[index]
+
     @always_inline
     fn __getitem__(
         inout self, _slice: Python3Slice

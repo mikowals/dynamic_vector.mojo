@@ -3,6 +3,7 @@ from testing import assert_equal
 from tests.utils import MojoTest, append_values
 
 
+@parameter
 fn assert_equal_with_message(
     test: MojoTest, actual: Int, expected: Int, label: String
 ) raises:
@@ -269,7 +270,7 @@ fn test_iter() raises:
 
 
 fn test_iter_next() raises:
-    var test = MojoTest("iter_next")
+    var test = MojoTest("iter __next__")
     var v = DynamicVector[Int](capacity=5)
     append_values(v, 1, 2, 3, 4)
     var iter = v.__iter__()
@@ -289,6 +290,22 @@ fn test_steal_data() raises:
     test.assert_equal(v.capacity, 0, "vector capacity")
     test.assert_true(not v.data, "vector data is null")
     test.assert_equal(data, orig_data, "stolen pointer")
+
+
+fn test_as_alias() raises:
+    var test = MojoTest("assigmnet to alias")
+
+    @parameter
+    fn create_vector() -> DynamicVector[Int]:
+        var v = DynamicVector[Int](capacity=2)
+        v.append(1)
+        v.append(2)
+        return v
+
+    alias vec = create_vector()
+    test.assert_equal(len(vec), 2, "vector length")
+    # compile time error without defining __getitem__ to avoid using __refitem__
+    test.assert_equal(vec[0], 1, "alias access")
 
 
 fn main() raises:
@@ -319,3 +336,4 @@ fn main() raises:
     test_iter()
     test_iter_next()
     test_steal_data()
+    test_as_alias()
