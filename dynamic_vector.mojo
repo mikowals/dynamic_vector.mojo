@@ -1,9 +1,12 @@
 from memory.anypointer import AnyPointer
 from algorithm.swap import swap
+from utils.variant import Variant
 
 alias i1 = __mlir_type.i1
 alias i1_1 = __mlir_attr.`1: i1`
 alias i1_0 = __mlir_attr.`0: i1`
+alias NoneOrInt = Variant[NoneType, Int]
+alias MAX_FINITE = math.limit.max_finite[DType.int64]().to_int()
 
 
 struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
@@ -119,8 +122,8 @@ struct DynamicVector[T: CollectionElement](Sized, CollectionElement):
 
     @always_inline
     fn __getitem__(
-        inout self, _slice: Slice
-    ) -> DynamicVectorSlice[T, __lifetime_of(self)]:
+        inout self, _slice: Python3Slice
+    ) raises -> DynamicVectorSlice[T, __lifetime_of(self)]:
         return DynamicVectorSlice[T](Reference(self), _slice)
 
     @always_inline
@@ -155,17 +158,17 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
     fn __init__(
         inout self,
         data: Reference[DynamicVector[T], i1_1, L],
-        _slice: Slice,
-    ):
+        _slice: Python3Slice,
+    ) raises:
         self.data = data
-        self._slice = Self.adapt_slice(_slice, len(data[]))
+        self._slice = _slice.to_numeric_slice(len(data[]))
         self.size = len(self._slice)
 
     @always_inline
     fn __init__(
         inout self,
         other: Self,
-        _slice: Slice,
+        _slice: Python3Slice,
     ) raises:
         self.data = other.data
         self._slice = Self.adapt_slice(_slice, other._slice, len(other))
@@ -181,7 +184,7 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
         return self.data[].data.__refitem__(self._slice[index])
 
     @always_inline
-    fn __getitem__(inout self, _slice: Slice) raises -> Self:
+    fn __getitem__(inout self, _slice: Python3Slice) raises -> Self:
         return Self(self, _slice)
 
     @always_inline
@@ -197,18 +200,19 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
 
     @always_inline
     @staticmethod
-    fn adapt_slice(_slice: Slice, dim: Int) -> Slice:
-        var start = _slice.start if _slice.start >= 0 else _slice.start + dim
-        var end = dim
-        if _slice._has_end():
-            end = _slice.end if _slice.end >= 0 else _slice.end + dim
+    fn adapt_slice(_slice: Python3Slice, base_slice: Slice, dim: Int) raises -> Slice:
+        """Helper function adapt the indices in a slice of a slice into a slice of the source vector.
 
-        return slice(start, end, _slice.step)
+        Args:
+            _slice: The desired slice specified in current slice indices.
+            base_slice: The _slice field of the current slice.
+            dim: The size of the current slice being sliced.
 
-    @always_inline
-    @staticmethod
-    fn adapt_slice(_slice: Slice, base_slice: Slice, dim: Int) -> Slice:
-        var res = Self.adapt_slice(_slice, dim)
+        Returns:
+            [description].
+        """
+
+        var res = _slice.to_numeric_slice(dim)
         res.start = math.min(base_slice.end, base_slice[res.start])
         res.end = math.min(base_slice.end, base_slice[res.end])
         res.step *= base_slice.step
@@ -216,23 +220,24 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
 
     @always_inline
     fn __setitem__(
-        inout self, _slice: Slice, owned value: DynamicVectorSlice[T]
+        inout self, _slice: Python3Slice, owned values: DynamicVectorSlice[T]
     ) raises:
         var target_slice = DynamicVectorSlice[T](self, _slice)
-        if len(target_slice) != len(value):
+        if len(target_slice) != len(values):
             raise Error(
                 String("slice assignment size mismatch: received ")
-                + len(value)
+                + len(values)
                 + "new values but destination expects "
                 + len(target_slice)
             )
         for i in range(len(target_slice)):
-            target_slice[i] = value[i]
+            target_slice[i] = values[i]
 
     @always_inline
     fn __setitem__(inout self, _slice: Slice, owned value: DynamicVector[T]) raises:
         self.__setitem__(
-            _slice, DynamicVectorSlice[T](Reference(value), Slice(0, len(value), 1))
+            _slice,
+            DynamicVectorSlice[T](Reference(value), Python3Slice(0, len(value), 1)),
         )
 
     @always_inline
@@ -306,3 +311,61 @@ struct _DynamicVectorSliceIter[T: CollectionElement, lifetime: MutLifetime](
     @always_inline
     fn __len__(self) -> Int:
         return len(self.src) - self.index
+
+
+@value
+struct Python3Slice:
+    """Slice that preserves empty inputs as None for correct handling of [::-1] etc."""
+
+    var start: NoneOrInt
+    var end: NoneOrInt
+    var step: NoneOrInt
+
+    fn __init__(inout self, slice: Slice):
+        debug_assert(slice.start >= 0, "Slice start must not be negative.")
+        debug_assert(slice.end >= 0, "Slice end must not be negative.")
+        self.start = slice.start
+        self.end = slice.end
+        self.step = slice.step
+
+    fn __init__(inout self, start: Int, end: Int):
+        self.start = start
+        self.end = end
+        self.step = 1
+
+    fn __init__(inout self, end: Int):
+        self.start = None
+        self.end = end
+        self.step = 1
+
+    fn _has_step(self) -> Bool:
+        return self.step.isa[Int]()
+
+    fn _has_start(self) -> Bool:
+        return self.start.isa[Int]()
+
+    fn _has_end(self) -> Bool:
+        return self.end.isa[Int]()
+
+    fn to_numeric_slice(self, size: Int = MAX_FINITE) raises -> Slice:
+        var step = 1 if not self._has_step() else self.step.get[Int]()[]
+        if step == 0:
+            raise Error("Step cannot be zero")
+        var default_start = 0 if step > 0 else size - 1
+        var default_end = size if step > 0 else -1
+        var start = default_start
+        var end = default_end
+        if self._has_start():
+            start = self.start.get[Int]()[]
+            start = start if start >= 0 else size + start
+
+        if self._has_end():
+            end = self.end.get[Int]()[]
+            end = end if end >= 0 else size + end
+
+        if step < 0:
+            start = math.min(start, default_start)
+        else:
+            end = math.min(end, default_end)
+
+        return Slice(start, end, step)

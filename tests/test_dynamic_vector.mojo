@@ -1,4 +1,4 @@
-from dynamic_vector import DynamicVector, DynamicVectorSlice
+from dynamic_vector import DynamicVector, DynamicVectorSlice, Python3Slice
 from testing import assert_equal
 from tests.utils import MojoTest, append_values
 
@@ -194,7 +194,7 @@ fn test_slice() raises:
     var test = MojoTest("slice")
     var v = DynamicVector[Int](capacity=2)
     append_values(v, 1, 2, 3)
-    var slice = v.__getitem__(Slice(1, 3))
+    var slice = v.__getitem__(Python3Slice(1, 3))
     test.assert_equal(len(slice), 2, "slice length")
     test.assert_equal(slice[1], 3, "slice[1]")
     slice[0] = 4
