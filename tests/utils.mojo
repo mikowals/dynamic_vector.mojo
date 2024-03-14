@@ -99,31 +99,27 @@ struct MojoTest:
             print(e)
 
     fn match_slice(self, result: Slice, expected: Slice, name: String):
-        """
-        Wraps testing.match_slice.
-        """
         try:
-            testing.assert_equal(
-                result.start,
-                expected.start,
-                String(name + ": expected start ")
-                + expected.start
-                + " got "
-                + result.start,
+            testing.assert_true(
+                result == expected,
+                String(
+                    name
+                    + " -  expected slice ("
+                    + expected.start
+                    + ", "
+                    + expected.end
+                    + ", "
+                    + expected.step
+                    + ") got ("
+                    + result.start
+                    + ", "
+                    + result.end
+                    + ", "
+                    + result.step
+                    + ")"
+                ),
             )
-            testing.assert_equal(
-                result.end,
-                expected.end,
-                String(name + ": expected end ") + expected.end + " got " + result.end,
-            )
-            testing.assert_equal(
-                result.step,
-                expected.step,
-                String(name + ": expected step ")
-                + expected.step
-                + " got "
-                + result.step,
-            )
+
         except e:
             print(e)
 
