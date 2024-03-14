@@ -206,23 +206,38 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
 
     @always_inline
     @staticmethod
-    fn adapt_slice(_slice: Python3Slice, base_slice: Slice, dim: Int) raises -> Slice:
-        """Helper function adapt the indices in a slice of a slice into a slice of the source vector.
+    fn adapt_slice(_slice: Python3Slice, base_slice: Slice, size: Int) raises -> Slice:
+        """Helper function adapt the received slice to correct indices of the underlying vector.
 
         Args:
             _slice: The desired slice specified in current slice indices.
             base_slice: The _slice field of the current slice.
-            dim: The size of the current slice being sliced.
+            size: The size of the current slice being sliced.
 
         Returns:
             [description].
         """
 
-        var res = _slice.to_numeric_slice(dim)
-        res.start = math.min(base_slice.end, base_slice[res.start])
-        res.end = math.min(base_slice.end, base_slice[res.end])
-        res.step *= base_slice.step
-        return res
+        var result_slice = _slice.to_numeric_slice(size)
+        # bound results to be within the previous slice bounds
+        var upper_bound_exclusive = base_slice.end if base_slice.step > 0 else base_slice.start + 1
+        var lower_bound_exclusive = base_slice.start - 1 if base_slice.step > 0 else base_slice.end
+
+        # convert to indices of the base_slice
+        result_slice.start = base_slice.__getitem__(result_slice.start)
+        result_slice.end = base_slice[result_slice.end]
+
+        # Detetermine step and direction of resulting slice
+        result_slice.step *= base_slice.step
+
+        # bounds checks with adjustment for inclusive bound on start
+        if result_slice.step > 0:
+            result_slice.start = math.max(lower_bound_exclusive + 1, result_slice.start)
+            result_slice.end = math.min(upper_bound_exclusive, result_slice.end)
+        else:
+            result_slice.start = math.min(upper_bound_exclusive - 1, result_slice.start)
+            result_slice.end = math.max(lower_bound_exclusive, result_slice.end)
+        return result_slice
 
     @always_inline
     fn __setitem__(
@@ -354,6 +369,18 @@ struct Python3Slice:
         return self.end.isa[Int]()
 
     fn to_numeric_slice(self, size: Int = MAX_FINITE) raises -> Slice:
+        """Create a new slice with all indices converted to valid numeric indices.
+
+        Nones are replaced with upper and lower bounds based on size. Negative indices are
+        converted to indices from the right. With negative step, if end starts as None it will
+        be set to -1 for exclusive bound.
+
+        Args:
+            size: The length of the vector being sliced. Defaults to maximum finite Int64 value.
+
+        Returns:
+            A new slice with indices converted based on size.
+        """
         var step = 1 if not self._has_step() else self.step.get[Int]()[]
         if step == 0:
             raise Error("Step cannot be zero")
@@ -363,11 +390,13 @@ struct Python3Slice:
         var end = default_end
         if self._has_start():
             start = self.start.get[Int]()[]
-            start = start if start >= 0 else size + start
+            if start < 0:
+                start += size
 
         if self._has_end():
             end = self.end.get[Int]()[]
-            end = end if end >= 0 else size + end
+            if end < 0:
+                end += size
 
         if step < 0:
             start = math.min(start, default_start)
