@@ -215,7 +215,7 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
             size: The size of the current slice being sliced.
 
         Returns:
-            [description].
+            A new slice with indices of the underlying vector.
         """
 
         var result_slice = _slice.to_numeric_slice(size)
@@ -224,7 +224,7 @@ struct DynamicVectorSlice[T: CollectionElement, L: MutLifetime](
         var lower_bound_exclusive = base_slice.start - 1 if base_slice.step > 0 else base_slice.end
 
         # convert to indices of the base_slice
-        result_slice.start = base_slice.__getitem__(result_slice.start)
+        result_slice.start = base_slice[result_slice.start]
         result_slice.end = base_slice[result_slice.end]
 
         # Detetermine step and direction of resulting slice
