@@ -173,13 +173,11 @@ fn test_moveinit() raises:
 fn test_delete() raises:
     var test = MojoTest("delete")
     var v = DynamicVector[Int](capacity=2)
-    var ptr = v.data
     v.push_back(1)
-    _ = v ^
-    """
-    Need to force clean up and check pointer is freed but the below fails
-    test.assert_true(not ptr, "data pointer is null")
-    """
+    var ptr = v.data
+    test.assert_equal(ptr[0], 1, "before free ptr[0]")
+    _ = v  # last use of v
+    test.assert_true(ptr[0] != 1, "after free pointer does not have value")
 
 
 fn test_refitem() raises:
