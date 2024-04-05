@@ -29,7 +29,15 @@ struct MojoTest:
         """
         try:
             testing.assert_equal(
-                a, b, String("Actual ") + label + " '" + a + "', expected '" + b + "'."
+                a,
+                b,
+                String("Actual ")
+                + label
+                + " '"
+                + a
+                + "', expected '"
+                + b
+                + "'.",
             )
 
         except e:
@@ -41,12 +49,22 @@ struct MojoTest:
         """
         try:
             testing.assert_equal(
-                a, b, String("Actual ") + label + " '" + a + "', expected '" + b + "'."
+                a,
+                b,
+                String("Actual ")
+                + label
+                + " '"
+                + a
+                + "', expected '"
+                + b
+                + "'.",
             )
         except e:
             print(e)
 
-    fn match_values(self, vec: DynamicVector[Int], *values: Int, first_index: Int = 0):
+    fn match_values(
+        self, vec: DynamicVector[Int], *values: Int, first_index: Int = 0
+    ):
         try:
             var count = len(values)
             for i in range(first_index, first_index + count):
@@ -81,7 +99,10 @@ struct MojoTest:
             print(e)
 
     fn match_values(
-        self, vec: DynamicVectorSlice[String], *values: String, first_index: Int = 0
+        self,
+        vec: DynamicVectorSlice[String],
+        *values: String,
+        first_index: Int = 0,
     ):
         try:
             var count = len(values)

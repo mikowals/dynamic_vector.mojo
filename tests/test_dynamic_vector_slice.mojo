@@ -1,5 +1,5 @@
 from dynamic_vector import DynamicVector, DynamicVectorSlice, Python3Slice
-from tests.utils import MojoTest, append_values
+from tests.test_utils import MojoTest, append_values
 
 
 fn test_create_slice() raises:
@@ -52,7 +52,9 @@ fn test_no_end() raises:
     var test = MojoTest("no end")
     var vec = DynamicVector[String](capacity=4)
     append_values(vec, "a", "b", "c", "d")
-    var preslice = DynamicVectorSlice[String](Reference(vec), Python3Slice(0, 4))
+    var preslice = DynamicVectorSlice[String](
+        Reference(vec), Python3Slice(0, 4)
+    )
     var slice = preslice[1::1]
     test.match_slice(slice._slice, Slice(1, 4, 1), "no end")
     test.match_values(slice, "b", "c", "d")
@@ -79,7 +81,9 @@ fn test_stride() raises:
     var test = MojoTest("strided bounds")
     var vec = DynamicVector[String](capacity=4)
     append_values(vec, "a", "b", "c", "d")
-    var slice = DynamicVectorSlice[String](Reference(vec), Python3Slice(1, 4, 2))
+    var slice = DynamicVectorSlice[String](
+        Reference(vec), Python3Slice(1, 4, 2)
+    )
     test.match_slice(slice._slice, Slice(1, 4, 2), "strided bounds")
     test.match_values(slice, "b", "d")
 
@@ -88,7 +92,9 @@ fn test_negative_stride() raises:
     var test = MojoTest("negative stride")
     var vec = DynamicVector[String](capacity=4)
     append_values(vec, "a", "b", "c", "d")
-    var slice = DynamicVectorSlice[String](Reference(vec), Python3Slice(-1, 0, -1))
+    var slice = DynamicVectorSlice[String](
+        Reference(vec), Python3Slice(-1, 0, -1)
+    )
     test.match_slice(slice._slice, Slice(3, 0, -1), "negative stride")
     test.match_values(slice, "d", "c", "b")
 
@@ -97,7 +103,9 @@ fn test_negative_stride_sugared() raises:
     var test = MojoTest("negative stride sugared")
     var vec = DynamicVector[String](capacity=4)
     append_values(vec, "a", "b", "c", "d")
-    var slice = DynamicVectorSlice[String](Reference(vec), Python3Slice(0, 4, 1))
+    var slice = DynamicVectorSlice[String](
+        Reference(vec), Python3Slice(0, 4, 1)
+    )
     var slice2 = slice[::-1]
     test.match_slice(slice2._slice, Slice(3, -1, -1), "negative stride sugared")
     test.match_values(slice2, "d", "c", "b", "a")
@@ -107,7 +115,9 @@ fn test_chained_negative_stride_sugared() raises:
     var test = MojoTest("chained negative stride sugared")
     var vec = DynamicVector[String](capacity=4)
     append_values(vec, "a", "b", "c", "d")
-    var slice = DynamicVectorSlice[String](Reference(vec), Python3Slice(0, 4, 1))
+    var slice = DynamicVectorSlice[String](
+        Reference(vec), Python3Slice(0, 4, 1)
+    )
     var slice2 = slice[::-1]
     var slice3 = slice2[:2:-1]
     test.match_slice(slice3._slice, Slice(0, 1, 1), "negative stride sugared")
@@ -146,7 +156,9 @@ fn test_chained_strided_slices() raises:
         "o",
         "p",
     )
-    var slice1 = DynamicVectorSlice[String](Reference(vec), Python3Slice(0, 16, 2))
+    var slice1 = DynamicVectorSlice[String](
+        Reference(vec), Python3Slice(0, 16, 2)
+    )
     test.match_slice(slice1._slice, Slice(0, 16, 2), "multiple slices 1")
     var slice2 = slice1[1::3]
     test.match_slice(slice2._slice, Slice(2, 16, 6), "multiple slices 2")
@@ -177,7 +189,9 @@ fn test_chained_strided_slices_with_negative_strides() raises:
         "o",
         "p",
     )
-    var slice1 = DynamicVectorSlice[String](Reference(vec), Python3Slice(15, None, -2))
+    var slice1 = DynamicVectorSlice[String](
+        Reference(vec), Python3Slice(15, None, -2)
+    )
     test.match_slice(slice1._slice, Slice(15, -1, -2), "multiple slices 1")
     var slice2 = slice1[1::3]
     test.match_slice(slice2._slice, Slice(13, -1, -6), "multiple slices 2")
@@ -246,7 +260,7 @@ fn test_iterate_empty_slice() raises:
     test.assert_equal(count, 0, "iteration count")
 
 
-fn main() raises:
+fn all_tests() raises:
     test_create_slice()
     test_start_equals_length()
     test_zero_length_slice()

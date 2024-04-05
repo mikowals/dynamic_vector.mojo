@@ -1,6 +1,6 @@
 from dynamic_vector import DynamicVector, DynamicVectorSlice, Python3Slice
 from testing import assert_equal
-from tests.utils import MojoTest, append_values
+from tests.test_utils import MojoTest, append_values
 
 
 @parameter
@@ -8,7 +8,9 @@ fn assert_equal_with_message(
     test: MojoTest, actual: Int, expected: Int, label: String
 ) raises:
     test.assert_equal(
-        actual, expected, label + " - Expected: " + expected + ", Actual: " + actual
+        actual,
+        expected,
+        label + " - Expected: " + expected + ", Actual: " + actual,
     )
 
 
@@ -162,7 +164,7 @@ fn test_moveinit() raises:
     var v = DynamicVector[Int](capacity=2)
     var orig_ptr = v.data
     append_values(v, 1, 2)
-    var v2 = v ^
+    var v2 = v^
     test.assert_equal(len(v2), 2, "size")
     test.match_values(v2, 1, 2)
     v2[0] = 3
@@ -185,7 +187,7 @@ fn test_refitem() raises:
     var v = DynamicVector[Int](capacity=2)
     append_values(v, 1, 2)
     var ref = v.__refitem__(0)
-    var x = ref.mlir_ref_type
+    alias x = ref.mlir_ref_type
     test.assert_equal(ref[], 1, "v[0]")
 
 
@@ -306,7 +308,7 @@ fn test_as_alias() raises:
     test.assert_equal(vec[0], 1, "alias access")
 
 
-fn main() raises:
+fn all_tests() raises:
     test_create_dynamic_vector()
     test_push_back()
     test_append()

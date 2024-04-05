@@ -1,5 +1,5 @@
 from dynamic_vector import DynamicVector, DynamicVectorSlice
-from collections.vector import DynamicVector as StdDynamicVector
+from collections.list import List
 
 
 struct Verbose(CollectionElement):
@@ -15,7 +15,9 @@ struct Verbose(CollectionElement):
         print(name, "value:", self.value, "hidden_id", self.hidden_id)
 
     fn __copyinit__(inout self, other: Self):
-        print("copyinit with value:", other.value, "hidden_id:", other.hidden_id)
+        print(
+            "copyinit with value:", other.value, "hidden_id:", other.hidden_id
+        )
         self.value = other.value
         self.hidden_id = other.hidden_id
 
@@ -38,12 +40,12 @@ fn main():
     print("show init, copy, move, and delete for objects in vector of vectors.")
     print()
     print("build std lib 2x2 vector of vectors")
-    var outer_1 = StdDynamicVector[StdDynamicVector[Verbose]](capacity=2)
+    var outer_1 = List[List[Verbose]](capacity=2)
     for i in range(2):
-        var inner = StdDynamicVector[Verbose](capacity=2)
+        var inner = List[Verbose](capacity=2)
         for j in range(2):
-            inner.push_back(Verbose(j))
-        outer_1.push_back(inner)
+            inner.append(Verbose(j))
+        outer_1.append(inner)
     print("finished building std lib vector of vectors")
     print()
     print("build reference based 2x2 vector of vectors")
@@ -61,7 +63,10 @@ fn main():
     print("finished update in std lib vector of vectors")
     print()
     print("fetch from std lib vector of vectors")
-    print("confirm std lib vector of vectors update at [1][1]:", outer_1[1][1].value)
+    print(
+        "confirm std lib vector of vectors update at [1][1]:",
+        outer_1[1][1].value,
+    )
     print("finished fetch from std lib vector of vectors")
     print()
 
