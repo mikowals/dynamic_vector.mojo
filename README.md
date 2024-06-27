@@ -4,6 +4,8 @@
 
 [Mojo🔥](https://github.com/modularml/mojo) test runner using [pytest](https://docs.pytest.org).
 
+### As of June 2024 I think most of the features this example demonstrated are now available in Mojo's nightly branch and will probably be in the next released version. The code here is now very out of date and is probably best to disappear soon to avoid any confusion about Mojo functionality or syntax.
+__________________________________
 An experimental drop in replacement for DynamicVector. It almost certainly has some bugs and it is likely that the nice things it does with References will be implemented in the Standard Library in a more reliable way shortly. But it shows why References are useful and demonstrates new features like `__refitem__` and `__lifetime_of(self)`.
 
 The repo contains:
